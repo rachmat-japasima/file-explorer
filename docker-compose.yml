@@ -1,0 +1,83 @@
+# ============================================================
+# docker-compose.yml
+# Services: postgres, backend (Bun/Elysia), frontend (Nginx)
+#
+# Usage:
+#   docker compose up --build          # start everything
+#   docker compose up -d               # detached
+#   docker compose run backend bun run db:seed  # seed DB
+# ============================================================
+
+version: '3.9'
+
+services:
+
+  # ---- PostgreSQL ----
+  postgres:
+    image: postgres:16-alpine
+    container_name: explorer-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-explorer}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-explorer_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-explorer}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'          # expose for local dev tools (TablePlus, etc.)
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-explorer}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---- Backend (Bun + Elysia) ----
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: explorer-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-explorer}:${POSTGRES_PASSWORD:-explorer_secret}@postgres:5432/${POSTGRES_DB:-explorer}
+      FRONTEND_URL: http://localhost:80
+      PORT: 3000
+      NODE_ENV: production
+    ports:
+      - '3000:3000'
+
+  # ---- DB Migrator (runs once, then exits) ----
+  migrator:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: explorer-migrator
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-explorer}:${POSTGRES_PASSWORD:-explorer_secret}@postgres:5432/${POSTGRES_DB:-explorer}
+    # command: ['bun', 'run', 'db:migrate:prod']
+    command: >
+      sh -c "bun run db:migrate:prod && bun run db:seed:prod"
+    restart: 'no'
+
+  # ---- Frontend (Nginx serving built Vue app) ----
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: explorer-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - '80:80'
+
+volumes:
+  postgres_data:
+    driver: local

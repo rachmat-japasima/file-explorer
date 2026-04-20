@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "paths": {
+      "@windows-explorer/shared": ["../packages/shared/src/index.ts"],
+      "@backend/*": ["../backend/src/*"]
+    }
+  },
+  "include": ["src/**/*"]
+}

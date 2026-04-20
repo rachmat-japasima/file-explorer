@@ -1,0 +1,29 @@
+{
+  "name": "file-explorer",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["packages/*", "backend", "frontend"],
+  "scripts": {
+    "dev": "concurrently \"bun run dev:backend\" \"bun run dev:frontend\"",
+    "dev:backend": "bun --cwd backend dev",
+    "dev:frontend": "bun --cwd frontend dev",
+    "build": "bun run build:shared && bun run build:backend && bun run build:frontend",
+    "build:shared": "bun --cwd packages/shared build",
+    "build:backend": "bun --cwd backend build",
+    "build:frontend": "bun --cwd frontend build",
+    "db:generate": "bun --cwd backend db:generate",
+    "db:migrate": "bun --cwd backend db:migrate",
+    "db:seed": "bun --cwd backend db:seed",
+    "db:seed:prod": "bun dist/infrastructure/database/seed.js",
+    "db:migrate:prod": "bun dist/infrastructure/database/migrate.js",
+    "test": "bun run test:backend && bun run test:frontend",
+    "test:backend": "bun --cwd backend test",
+    "test:frontend": "bun --cwd frontend test"
+  },
+  "resolutions": {
+      "@sinclair/typebox": "0.34.35"
+    },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
