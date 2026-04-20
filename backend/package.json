@@ -5,7 +5,7 @@
     "dev": "bun --env-file=../.env --watch src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
     "start": "bun dist/index.js",
-    "db:generate": "drizzle-kit generate",
+    "db:generate": "drizzle-kit generate --config=./drizzle.config.ts",
     "db:migrate": "bun src/infrastructure/database/migrate.ts",
     "db:seed": "bun --env-file=../.env src/infrastructure/database/seed.ts",
     "db:migrate:prod": "bun dist/infrastructure/database/migrate.js",
